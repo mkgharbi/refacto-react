@@ -1,71 +1,68 @@
-import { useEffect, useState } from 'react';
-import { threadId } from 'worker_threads';
-
-interface State {
-  countries: string[],
-  classifications: string[],
-  subClassifications: string[]
-}
+import { useMemo } from 'react';
 
 interface Props {
   domains?: string[]
 }
 
 const DomainFilter = (props: Props) => {
-  const domains = props?.domains ?? [];
-  const countries: string[] = [];
-  const classifications: string[] = [];
-  const subClassifications: string[] = [];
-  const s: any = {};
+  const domains = useMemo(() => props?.domains ?? [], [props.domains]);
 
-  let [state, setState] = useState<State>({
-    countries: [],
-    classifications: [],
-    subClassifications: []
-  });
-
-
-  useEffect(() => {
-    for(let i = 0; i < domains.length; i++) {
-      if (countries.indexOf(domains[i].substring(0,2)) <= 0) {
-        countries.push(domains[i].substring(0,2))
+  const countries = useMemo<string[]>(() => {
+    const result: string[] = [];
+    for (let i = 0; i < domains.length; i++) {
+      const country = domains[i].substring(0, 2);
+      if (!result.includes(country)) {
+        result.push(country);
       }
-      classifications.push(domains[i].substring(3,5));
-      let flag = false;
-      for(let j = 0; j < subClassifications.length; j++) {
-        if (subClassifications[j] == domains[i].substring(6)) {
-          flag = true
-          break;
-        }
-      }
-      if (!flag) {
-        subClassifications.push(domains[i].substring(6));
-      }
-    };
-    setState({
-      countries: countries,
-      classifications: classifications.filter((e, i, l) => l.indexOf(e) === i),
-      subClassifications: subClassifications
-    });
+    }
+    return result;
   }, [domains]);
 
-  return (<>
-    <select name="countries" multiple>
-      {state.countries.map(country => (
-        <option value={country} key={country}>{country}</option>
-      ))}
-    </select>
-    <select name="classifications" multiple>
-      {state.classifications.map(classification => (
-        <option value={classification} key={classification}>{classification}</option>
-      ))}
-    </select>
-    <select name="subClassifications" multiple>
-      {state.subClassifications.map(subClassification => (
-        <option value={subClassification} key={subClassification}>{subClassification}</option>
-      ))}
-    </select>
-  </>);
+  const classifications = useMemo<string[]>(() => {
+    const result: string[] = [];
+    for (let i = 0; i < domains.length; i++) {
+      const classification = domains[i].substring(3, 5);
+      result.push(classification);
+    }
+    return Array.from(new Set(result));
+  }, [domains]);
+
+  const subClassifications = useMemo<string[]>(() => {
+    const result: string[] = [];
+    for (let i = 0; i < domains.length; i++) {
+      const subClassification = domains[i].substring(6);
+      if (!result.includes(subClassification)) {
+        result.push(subClassification);
+      }
+    }
+    return result;
+  }, [domains]);
+
+  return (
+    <>
+      <select name="countries" multiple aria-label="countries">
+            {countries.map((country) => (
+              <option value={country} key={country}>
+                {country}
+              </option>
+            ))}
+          </select>
+      <select name="classifications" multiple aria-label="classifications">
+            {classifications.map((classification) => (
+              <option value={classification} key={classification}>
+                {classification}
+              </option>
+            ))}
+          </select>
+      <select name="subClassifications" multiple aria-label="subClassifications">
+            {subClassifications.map((subClassification) => (
+              <option value={subClassification} key={subClassification}>
+                {subClassification}
+              </option>
+            ))}
+          </select>
+        </>
+  );
 }
 
-export default DomainFilter
+export default DomainFilter;
