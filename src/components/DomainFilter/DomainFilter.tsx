@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { getClassifications, getCountries, getSubClassifications } from '../../utils/domainUtils';
+import { getDomains } from '../../redux/domains/selectors';
 import Select from '../Select/Select';
 
-interface Props {
-  domains?: string[]
-}
-
-const DomainFilter = (props: Props) => {
-  const domains = useMemo(() => props?.domains ?? [], [props.domains]);
+const DomainFilter = () => {
+  const domains = useSelector(getDomains);
 
   const countries = useMemo(() => getCountries(domains), [domains]);
   const classifications = useMemo(() => getClassifications(domains), [domains]);

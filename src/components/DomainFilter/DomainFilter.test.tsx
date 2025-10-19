@@ -1,10 +1,27 @@
+import { configureStore } from '@reduxjs/toolkit'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
-import DomainFilter from './DomainFilter.component'
+import { act } from 'react'
+import { Provider } from 'react-redux'
+import { receiveDomains } from '../../redux/domains/actions'
+import rootReducer from '../../redux/reducer'
+import DomainFilter from './DomainFilter'
 
 describe('DomainFilter', () => {
+  const renderWithDomains = (domains?: string[]) => {
+    const store = configureStore({ reducer: rootReducer, preloadedState: { domains: domains ?? [] } as any })
+    return {
+      store,
+      ...render(
+        <Provider store={store}>
+          <DomainFilter />
+        </Provider>
+      ),
+    }
+  }
+
   it('renders three select elements for countries, classifications, and subClassifications', () => {
-    render(<DomainFilter domains={['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL']} />)
+    renderWithDomains(['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL'])
     expect(
       screen.getByRole('listbox', { name: 'countries' })
     ).toBeInTheDocument()
@@ -17,7 +34,7 @@ describe('DomainFilter', () => {
   })
 
   it('renders correct country options from domains', () => {
-    render(<DomainFilter domains={['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL']} />)
+    renderWithDomains(['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL'])
     const countriesSelect = screen.getByRole('listbox', { name: 'countries' })
     expect(screen.getByText('US')).toBeInTheDocument()
     expect(screen.getByText('FR')).toBeInTheDocument()
@@ -26,7 +43,7 @@ describe('DomainFilter', () => {
   })
 
   it('renders correct classification options from domains', () => {
-    render(<DomainFilter domains={['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL']} />)
+    renderWithDomains(['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL'])
     const classificationsSelect = screen.getByRole('listbox', {
       name: 'classifications',
     })
@@ -37,7 +54,7 @@ describe('DomainFilter', () => {
   })
 
   it('renders correct subClassification options from domains', () => {
-    render(<DomainFilter domains={['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL']} />)
+    renderWithDomains(['US_OK-WOK', 'FR_NK-WOL', 'EN_BL-WOL'])
     const subClassificationsSelect = screen.getByRole('listbox', {
       name: 'subClassifications',
     })
@@ -49,7 +66,7 @@ describe('DomainFilter', () => {
   })
 
   it('renders empty selects when domains is an empty array', () => {
-    render(<DomainFilter domains={[]} />)
+    renderWithDomains([])
     expect(
       within(screen.getByRole('listbox', { name: 'countries' })).queryAllByRole(
         'option'
@@ -68,7 +85,7 @@ describe('DomainFilter', () => {
   })
 
   it('renders empty selects when domains is undefined', () => {
-    render(<DomainFilter />)
+    renderWithDomains()
     expect(
       within(screen.getByRole('listbox', { name: 'countries' })).queryAllByRole(
         'option'
@@ -87,7 +104,7 @@ describe('DomainFilter', () => {
   })
 
   it('preserves order of first occurrence for countries', () => {
-    render(<DomainFilter domains={['FRAB12', 'USCD34', 'FRAB56']} />)
+    renderWithDomains(['FRAB12', 'USCD34', 'FRAB56'])
     const countryOptions = within(
       screen.getByRole('listbox', { name: 'countries' })
     )
@@ -96,11 +113,13 @@ describe('DomainFilter', () => {
     expect(countryOptions).toEqual(['FR', 'US'])
   })
 
-  it('updates options when domains prop changes', () => {
-    const { rerender } = render(<DomainFilter domains={['FRAB12']} />)
-    expect(screen.getByText('FR')).toBeInTheDocument()
-    rerender(<DomainFilter domains={['USCD34']} />)
-    expect(screen.getByText('US')).toBeInTheDocument()
+  it('updates options when domains prop changes', async () => {
+    const { store } = renderWithDomains(['FRAB12'])
+    await screen.findByText('FR')
+    act(() => {
+      store.dispatch(receiveDomains(['USCD34']))
+    })
+    await screen.findByText('US')
     expect(screen.queryByText('FR')).not.toBeInTheDocument()
   })
 })

@@ -1,1 +1,1 @@
-export { default } from './DomainFilter.container';
+export { default } from './DomainFilter';
